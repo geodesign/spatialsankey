@@ -1,0 +1,34 @@
+{
+    "nodes": [
+        {"id":0, "data":{ "name":"Lake Okechobee", "type": "storage", "max_value":40, "value":20, "min_value":0, "lat": 26.94922257769204, "lng": -80.760498046875}},
+        {"id":1, "data":{ "name":"Everglades Agricultural Area", "type": "storage", "max_value":40, "value":40, "min_value":0, "lat": 26.23430203240673, "lng": -80.93028564453125}},
+
+        {"id":2, "data":{ "name":"West Palm Beach", "type": "demand", "max_value":40, "value":20, "min_value":3, "lat": 26.686729520004036, "lng": -80.06011962890625}},
+        {"id":3, "data":{ "name":"Fort Myers", "type": "demand", "max_value":40, "value":15, "min_value":3, "lat": 26.487782213238116, "lng": -82.078857421875}},
+        {"id":4, "data":{ "name":"Everglades Agricultural Area", "type": "demand", "max_value":40, "value":15, "min_value":3, "lat": 26.354958989429573, "lng": -80.47760009765624}},
+
+        {"id":5, "data":{ "name":"Ocean", "type": "sink", "lat": 26.672004547729433, "lng": -79.50531005859375}},
+
+        {"id":6, "data":{ "name":"Junction WPB", "type": "junction", "max_value":40, "value":35, "min_value":3, "lat": 26.882395446979752, "lng": -80.39794921875}},
+        {"id":7, "data":{ "name":"Junction FM", "type": "junction", "max_value":40, "value":20, "min_value":8, "lat": 26.838776064165863, "lng": -81.39770507812499}},
+        {"id":8, "data":{ "name":"Junction EAA", "type": "junction", "max_value":40, "value":25, "min_value":0, "lat": 26.566419985978886, "lng": -80.45338134765625}},
+
+        {"id":9, "data":{ "name":"Unregulated WPB", "type": "unregulated", "lat": 26.970630960767105, "lng": -80.10406494140625}},
+        {"id":10, "data":{ "name":"Unregulated FM", "type": "unregulated", "lat": 27.002855190521245, "lng": -81.5240478515625}},
+        {"id":11, "data":{ "name":"Unregulated EEA", "type": "unregulated", "lat": 26.666419985978886, "lng": -80.35338134765625}}
+    ],
+    "links":[
+        {"source":0, "target":1, "value":3},
+        {"source":0, "target":6, "value":3},
+        {"source":0, "target":7, "value":3},
+        {"source":0, "target":8, "value":4},
+        {"source":4, "target":1, "value":5},
+        {"source":6, "target":2, "value":6},
+        {"source":6, "target":5, "value":7},
+        {"source":7, "target":3, "value":8},
+        {"source":8, "target":4, "value":9},
+        {"source":9, "target":6, "value":10},
+        {"source":10, "target":7, "value":11},
+        {"source":11, "target":8, "value":12}
+    ]
+}

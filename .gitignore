@@ -1,0 +1,14 @@
+# Compiled python code
+*.pyc
+
+# osx files
+.DS_Store
+
+# sass cache
+.sass-cache
+.elasticbeanstalk
+
+# Celerybeat data
+celerybeat-schedule.db
+celerybeat.pid
+celeryev.pid
