@@ -7,7 +7,7 @@
 <style>
 #map {
   width: 1000px;
-  height: 600px;
+  height: 400px;
 }
 #msg-box {
   position:absolute;
@@ -56,41 +56,43 @@ circle:hover{
 
     var spatialsankey = d3.spatialsankey();
     
-    d3.json("collection.json", function(collection) {
+    d3.json("sfwnetwork.json", function(network) {
+      d3.json("links.json", function(links) {
 
         spatialsankey = d3.spatialsankey()
                                 .map(map)
-                                .data(collection);
+                                .network(network)
+                                .links(links);
+
+        var node = spatialsankey.node(),
+            link = spatialsankey.link(),
+            linkwidth = link.width();
 
         var circs = g.selectAll("circle")
-          .data(collection.nodes)
+          .data(network.features)
           .enter()
           .append("circle")
-          .attr("cx", spatialsankey.node.cx)
-          .attr("cy", spatialsankey.node.cy)
-          .attr("r", spatialsankey.node.r)
-          .style("fill", spatialsankey.node.fill)
-          .on('mouseover', spatialsankey.node.mouseover);
-
-        var link = spatialsankey.link().shift({x:0.5,y:0.8}),
-            linkwidth = spatialsankey.linkwidth();
+          .attr("cx", node.cx)
+          .attr("cy", node.cy)
+          .attr("r", node.r)
+          .style("fill", node.fill)
+          .on('mouseover', node.mouseover);
 
         var links = g.selectAll("path")
-          .data(collection.links)
+          .data(links)
           .enter().append("path")
           .attr("d", link)
           .style("stroke-width", linkwidth);
         
         var update = function(){
-            circs.attr("cx", spatialsankey.node.cx)
-                  .attr("cy", spatialsankey.node.cy)
-                  .attr("r", spatialsankey.node.r)
-                  .style("fill", spatialsankey.node.fill);
+            circs
+              .attr("cx", node.cx)
+              .attr("cy", node.cy);
 
             links.attr("d", link);
-
         };
       
         map.on("viewreset", update);
     });
+  });
 </script>

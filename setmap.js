@@ -1,6 +1,6 @@
 // Set leaflet map
 var map = new L.map('map', {
-          center: new L.LatLng(26.94922257769204, -80.760498046875),
+          center: new L.LatLng(26.24922257769204, -80.760498046875),
           zoom: 8,
           minZoom: 0,
           maxZoom: 18

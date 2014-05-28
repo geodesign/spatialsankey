@@ -1,0 +1,62 @@
+[
+  {
+    "source": 0,
+    "target": 1,
+    "value": 3
+  },
+  {
+    "source": 0,
+    "target": 6,
+    "value": 3
+  },
+  {
+    "source": 0,
+    "target": 7,
+    "value": 3
+  },
+  {
+    "source": 0,
+    "target": 8,
+    "value": 4
+  },
+  {
+    "source": 4,
+    "target": 1,
+    "value": 5
+  },
+  {
+    "source": 6,
+    "target": 2,
+    "value": 6
+  },
+  {
+    "source": 6,
+    "target": 5,
+    "value": 7
+  },
+  {
+    "source": 7,
+    "target": 3,
+    "value": 8
+  },
+  {
+    "source": 8,
+    "target": 4,
+    "value": 9
+  },
+  {
+    "source": 9,
+    "target": 6,
+    "value": 10
+  },
+  {
+    "source": 10,
+    "target": 7,
+    "value": 11
+  },
+  {
+    "source": 11,
+    "target": 8,
+    "value": 12
+  }
+]

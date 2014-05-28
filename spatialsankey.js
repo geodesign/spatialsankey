@@ -1,15 +1,30 @@
 d3.spatialsankey = function() {
   var spatialsankey = {},
-      data = {},
-      map = {};
+      network = {},
+      links = {},
+      map = {},
+      color;
 
-  spatialsankey.data = function(_) {
-    if (!arguments.length) return data;
-    data = _;
-    data.links.forEach(function(d){
-      d.source = d3.map(data.nodes).get(d.source).data;
-      d.target = d3.map(data.nodes).get(d.target).data;
-    });
+  spatialsankey.network = function(_) {
+    if (!arguments.length) return network;
+    network = _;
+    // Reverse coordinates for leaflet compliance
+    network.features.forEach(function(d){d.geometry.coordinates.reverse();});
+    return spatialsankey;
+  };
+
+  spatialsankey.links = function(_) {
+    if (!arguments.length) return links;
+    links = _;
+    links.map(function(link){
+      // Get target and source features
+      var source_feature = network.features.filter(function(d) {return d.properties.id == link.source; })[0],
+          target_feature = network.features.filter(function(d) {return d.properties.id == link.target; })[0];
+      // Set coordinates for source and target
+      link.source_coords = source_feature.geometry.coordinates;
+      link.target_coords = target_feature.geometry.coordinates;
+      return link;
+    })
     return spatialsankey;
   };
 
@@ -26,11 +41,12 @@ d3.spatialsankey = function() {
   };
 
   spatialsankey.link = function() {
-    var shift = {"x": 0.3, "y": 0.1};
+    var shift = {"x": 0.3, "y": 0.1},
+        width = function width(d) {return d.value;};
 
     function link(d) {
-      var source = map.latLngToLayerPoint([d.source.lat, d.source.lng]),
-          target = map.latLngToLayerPoint([d.target.lat, d.target.lng]),
+      var source = map.latLngToLayerPoint(d.source_coords),
+          target = map.latLngToLayerPoint(d.target_coords),
           diff = {"x": source.x - target.x, "y": source.y - target.y},
           ctl_source = {"x": source.x - shift.x*diff.x, "y": source.y + shift.y},
           ctl_target = {"x": target.x + shift.x*diff.x, "y": target.y - shift.y};
@@ -39,7 +55,7 @@ d3.spatialsankey = function() {
            + "C" + ctl_source.x + "," + ctl_source.y
            + " " + ctl_target.x + "," + ctl_target.y
            + " " + target.x + "," + target.y;
-    }
+    };
 
     link.shift = function(_) {
       if (!arguments.length) return shift;
@@ -47,48 +63,54 @@ d3.spatialsankey = function() {
       return link;
     };
 
+    link.width = function(_){
+      if (!arguments.length) return width;
+      width = _;      
+      return width;
+    };
+
     return link;
   };
 
-  spatialsankey.linkwidth = function(){
-    function width(d) {return d.value;};
-    return width;
-  };
-
-  spatialsankey.node = {};
-  spatialsankey.node.cx = function(d){
-    var cx = map.latLngToLayerPoint([d.data.lat, d.data.lng]).x;
-    if(!cx) return null;
-    return cx;
-  };
-  spatialsankey.node.cy = function(d) {
-    var cy = map.latLngToLayerPoint([d.data.lat, d.data.lng]).y;
-    if(!cy) return null;
-    return cy;
-
-  };
-  spatialsankey.node.r = function(d) {
-    var val = d.data.value;
-    if(!val) return 0;
-    return val;
-  };
-
-  spatialsankey.node.color = d3.scale.linear()
+  spatialsankey.node = function(){
+    var node = {},
+        color = d3.scale.linear()
                   .domain([0, 1])
                   .range(["yellow", "red"]);
 
-  spatialsankey.node.fill = function(d) {
-    var load = (d.data.value - d.data.min_value)/(d.data.max_value - d.data.min_value);
-    if(!load) load = 0;
-    return spatialsankey.node.color(load);
-  }
-
-  spatialsankey.node.mouseover = function(d){
-    d3.selectAll('#msg-box').text(d.data.name + ' (' + d.data.type + ')');
-  }
+    node.cx = function(d){
+      cx = map.latLngToLayerPoint(d.geometry.coordinates).x;
+      if(!cx) return null;
+      return cx;
+    };
+    node.cy = function(d) {
+      cy = map.latLngToLayerPoint(d.geometry.coordinates).y;
+      if(!cy) return null;
+      return cy;
+    };
+    node.r = function(d) {
+      var val = d.properties.value;
+      if(!val) return 0;
+      return val;
+    };
+    node.color = function(_){
+      if (!arguments.length) return color;
+      color = _;
+      return color;
+    };
+    node.fill = function(d) {
+      var diff = d.properties.value - d.properties.min_value,
+          range = d.properties.max_value - d.properties.min_value,
+          load = diff/range;
+      if(!load) load = 0;
+      return color(load);
+    };
+    node.mouseover = function(d){
+      d3.selectAll('#msg-box').text(d.properties.id + ' // ' + d.properties.name + ' (' + d.properties.type + ')');
+    };
+    return node;
+  };
 
   return spatialsankey;
 };
-
-
 
