@@ -1,8 +1,9 @@
 d3.spatialsankey = function() {
   var spatialsankey = {},
+      map = {},
       network = {},
       links = {},
-      map = {},
+      flows = {},
       color;
 
   spatialsankey.network = function(_) {
@@ -27,6 +28,17 @@ d3.spatialsankey = function() {
     })
     return spatialsankey;
   };
+  spatialsankey.flows = function(_){
+    if (!arguments.length) return flows;
+    flows = _;
+    links.map(function(link){
+      // debugger
+      var flow = flows.filter(function(flow) {return flow.id == link.id;})[0]
+      link.flow = flow.flow;
+      return link; 
+    });
+    return spatialsankey
+  };
 
   spatialsankey.leaflet = function(_) {
     if(!arguments.length) return L;
@@ -42,7 +54,7 @@ d3.spatialsankey = function() {
 
   spatialsankey.link = function() {
     var shift = {"x": 0.3, "y": 0.1},
-        width = function width(d) {return d.value;};
+        width = function width(d) {return d.flow;};
 
     function link(d) {
       var source = map.latLngToLayerPoint(d.source_coords),
@@ -91,7 +103,8 @@ d3.spatialsankey = function() {
     node.r = function(d) {
       var val = d.properties.value;
       if(!val) return 0;
-      return val;
+      // return val;
+      return val/2;
     };
     node.color = function(_){
       if (!arguments.length) return color;
@@ -106,7 +119,7 @@ d3.spatialsankey = function() {
       return color(load);
     };
     node.mouseover = function(d){
-      d3.selectAll('#msg-box').text(d.properties.id + ' // ' + d.properties.name + ' (' + d.properties.type + ')');
+      d3.select('#msg-box').text(d.properties.id + ' // ' + d.properties.name + ' (' + d.properties.type + ')');
     };
     return node;
   };

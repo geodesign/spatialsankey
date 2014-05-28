@@ -373,7 +373,7 @@
         "id": 20,
         "type": "unregulated",
         "name": null,
-        "value": 32.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -391,7 +391,7 @@
         "id": 21,
         "type": "unregulated",
         "name": null,
-        "value": 21.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -409,15 +409,15 @@
         "id": 22,
         "type": "unregulated",
         "name": null,
-        "value": 43.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
       "geometry": {
         "type": "Point",
         "coordinates": [
-          -80.466464896162293,
-          26.665437123404587
+          -80.40900343997076,
+          26.710357594791184
         ]
       }
     },
@@ -445,7 +445,7 @@
         "id": 24,
         "type": "unregulated",
         "name": "Boynton Beach",
-        "value": 16.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -499,7 +499,7 @@
         "id": 27,
         "type": "unregulated",
         "name": "Belle Glade",
-        "value": 6.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -517,7 +517,7 @@
         "id": 28,
         "type": "unregulated",
         "name": null,
-        "value": 2.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -535,7 +535,7 @@
         "id": 29,
         "type": "unregulated",
         "name": "Okaloacoochee",
-        "value": 43.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -553,7 +553,7 @@
         "id": 30,
         "type": "unregulated",
         "name": null,
-        "value": 20.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -571,7 +571,7 @@
         "id": 31,
         "type": "unregulated",
         "name": null,
-        "value": 10.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -607,7 +607,7 @@
         "id": 33,
         "type": "unregulated",
         "name": null,
-        "value": 13.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -625,7 +625,7 @@
         "id": 34,
         "type": "unregulated",
         "name": null,
-        "value": 7.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },
@@ -697,7 +697,7 @@
         "id": 38,
         "type": "unregulated",
         "name": null,
-        "value": 49.0,
+        "value": 0.0,
         "max_value": 50.0,
         "min_value": 0.0
       },

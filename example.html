@@ -5,11 +5,19 @@
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
 
 <style>
-#map {
-  width: 1000px;
-  height: 400px;
+body {
+  position: absolute;
+  width:100%;
+  height: 100%;
 }
-#msg-box {
+#map {
+  top:0px;
+  left:0px;
+  right:0px;
+  /*bottom: 0px;*/
+  height: 100%;
+}
+#msg-box, #randomize {
   position:absolute;
   top: 90px;
   left: 20px;
@@ -20,6 +28,10 @@
   font-family: sans-serif;
   background-color: white;
 }
+#randomize {
+  top: 140px;
+  cursor: pointer;
+}
 path {
   fill: none;
   stroke: #4682B4;
@@ -27,7 +39,6 @@ path {
   stroke-linecap: round;
   cursor: pointer;
 }
-
 path:hover {
   stroke-opacity: 0.8;
   stroke: #315B7E;
@@ -40,29 +51,33 @@ circle:hover{
     fill-opacity: 0.6;
 }
 </style>
-<div id="container">
+
+<body>
 <div id="map"></div>
 <div id="msg-box">Hover over nodes</div>
-</div>
-
+<div id="randomize">Randomize!</div>
+</body>
 
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
 <script src="spatialsankey.js"></script>
 <script src="setmap.js"></script>
-<script type="text/javascript">
-    var svg = d3.select("#map").select("svg"),
-        g = svg.append("g");
 
-    var spatialsankey = d3.spatialsankey();
-    
-    d3.json("sfwnetwork.json", function(network) {
+<script type="text/javascript">
+  var svg = d3.select("#map").select("svg"),
+      g = svg.append("g");
+
+  var spatialsankey = d3.spatialsankey();
+
+  d3.json("sfwnetwork.json", function(network) {
+    d3.json("flows.json", function(flows) {
       d3.json("links.json", function(links) {
 
         spatialsankey = d3.spatialsankey()
                                 .map(map)
                                 .network(network)
-                                .links(links);
+                                .links(links)
+                                .flows(flows);
 
         var node = spatialsankey.node(),
             link = spatialsankey.link(),
@@ -78,21 +93,38 @@ circle:hover{
           .style("fill", node.fill)
           .on('mouseover', node.mouseover);
 
-        var links = g.selectAll("path")
+        var beziers = g.selectAll("path")
           .data(links)
           .enter().append("path")
           .attr("d", link)
           .style("stroke-width", linkwidth);
         
-        var update = function(){
+        var viewreset = function(){
             circs
               .attr("cx", node.cx)
               .attr("cy", node.cy);
 
-            links.attr("d", link);
+            beziers
+              .attr("d", link);
+        };
+
+        randomize = function(){
+          network.features.map(function(d){
+            d.properties.value = 40*Math.random() + 5;
+            return d;
+          });
+          links.map(function(d){
+            d.flow = 10*Math.random() + 2;
+            return d;
+          });
+          circs.transition().attr("r", node.r);
+          beziers.transition().style("stroke-width", linkwidth);
         };
       
-        map.on("viewreset", update);
+        map.on("viewreset", viewreset);
+
+        d3.select('#randomize').on('click', randomize)
+      });
     });
   });
 </script>
