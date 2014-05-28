@@ -82,7 +82,10 @@ d3.spatialsankey = function() {
     if(!load) load = 0;
     return spatialsankey.node.color(load);
   }
-  
+
+  spatialsankey.node.mouseover = function(d){
+    d3.selectAll('#msg-box').text(d.data.name + ' (' + d.data.type + ')');
+  }
 
   return spatialsankey;
 };
