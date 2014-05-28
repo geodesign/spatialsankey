@@ -118,9 +118,6 @@ d3.spatialsankey = function() {
       if(!load) load = 0;
       return color(load);
     };
-    node.mouseover = function(d){
-      d3.select('#msg-box').text(d.properties.id + ' // ' + d.properties.name + ' (' + d.properties.type + ')');
-    };
     return node;
   };
 

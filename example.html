@@ -83,6 +83,12 @@ circle:hover{
             link = spatialsankey.link(),
             linkwidth = link.width();
 
+        var mouseover = function(d){
+          d3.select('#msg-box').text(d.properties.name + ' (type: ' +
+           d.properties.type + ', id: ' + d.properties.id + ')');
+        };
+
+
         var circs = g.selectAll("circle")
           .data(network.features)
           .enter()
@@ -91,7 +97,7 @@ circle:hover{
           .attr("cy", node.cy)
           .attr("r", node.r)
           .style("fill", node.fill)
-          .on('mouseover', node.mouseover);
+          .on('mouseover', mouseover);
 
         var beziers = g.selectAll("path")
           .data(links)
