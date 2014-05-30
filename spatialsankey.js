@@ -8,8 +8,7 @@ d3.spatialsankey = function() {
       links = {},
       flows = {},
       node_flow_range = {},
-      link_flow_range = {},
-      node_radius_range = {min: 0, max: 20};
+      link_flow_range = {};
 
   // Get or set leaflet library (defaults to L)
   spatialsankey.leaflet = function(_) {
@@ -72,9 +71,8 @@ d3.spatialsankey = function() {
     // Calculate ranges of values for links and nodes
     link_flow_range.min = d3.min(links, function(link) { return link.flow; });
     link_flow_range.max = d3.max(links, function(link) { return link.flow; });
-    node_flow_range.min = d3.min(nodes.features, function(feature) { return feature.aggregate_inflows; });
-    node_flow_range.max = d3.max(nodes.features, function(feature) { return feature.aggregate_inflows; });
-
+    node_flow_range.min = d3.min(nodes.features, function(feature) { return feature.properties.aggregate_inflows; });
+    node_flow_range.max = d3.max(nodes.features, function(feature) { return feature.properties.aggregate_inflows; });
     return spatialsankey;
   };
 
@@ -82,12 +80,12 @@ d3.spatialsankey = function() {
   spatialsankey.link = function() {
     // Set default curvature parameters
     var shift = {"x": 0.3, "y": 0.1},
-        width_range = {min: 2, max: 10};
+        width_range = {min: 2, max: 8};
     
+    // Calculate widht based on data range and with specifications
     var width = function width(d) {
           var diff = d.flow - link_flow_range.min,
               range = link_flow_range.max - link_flow_range.min;
-          console.log(diff/range);
           return (width_range.max - width_range.min)*(diff/range) + width_range.min;
         };
 
@@ -128,11 +126,13 @@ d3.spatialsankey = function() {
   // Draw node circle
   spatialsankey.node = function(){
     var node = {},
+        node_radius_range = {min: 10, max: 30},
+        node_color_range = ["yellow", "red"],
         color = d3.scale.linear()
                   .domain([0, 1])
-                  .range(["yellow", "red"]);
+                  .range(node_color_range);
 
-    node.cx = function(d){
+    node.cx = function(d) {
       cx = map.latLngToLayerPoint(d.geometry.coordinates).x;
       if(!cx) return null;
       return cx;
@@ -143,20 +143,24 @@ d3.spatialsankey = function() {
       return cy;
     };
     node.r = function(d) {
-      var val = d.properties.aggregate_inflows;
-      if(!val) return 0;
-      return val;
+      var diff = d.properties.aggregate_inflows - node_flow_range.min,
+          range = node_flow_range.max - node_flow_range.min;
+      return (node_radius_range.max - node_radius_range.min)*(diff/range) + node_radius_range.min;
     };
-    node.color = function(_){
+    node.color = function(_) {
       if (!arguments.length) return color;
       color = _;
       return color;
     };
+    node.color_range = function(_) {
+      if (!arguments.length) return node_color_range;
+      node_color_range = _;
+      return node_color_range;
+    };
     node.fill = function(d) {
-      var diff = d.properties.value - d.properties.min_value,
-          range = d.properties.max_value - d.properties.min_value,
+      var diff = d.properties.aggregate_inflows - node_flow_range.min,
+          range = node_flow_range.max - node_flow_range.min,
           load = diff/range;
-      if(!load) load = 0;
       return color(load);
     };
     return node;
