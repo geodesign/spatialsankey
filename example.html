@@ -69,13 +69,13 @@ circle:hover{
 
   var spatialsankey = d3.spatialsankey();
 
-  d3.json("sfwnetwork.json", function(network) {
+  d3.json("nodes.json", function(nodes) {
     d3.json("flows.json", function(flows) {
       d3.json("links.json", function(links) {
 
         spatialsankey = d3.spatialsankey()
                                 .map(map)
-                                .network(network)
+                                .nodes(nodes)
                                 .links(links)
                                 .flows(flows);
 
@@ -90,7 +90,7 @@ circle:hover{
 
 
         var circs = g.selectAll("circle")
-          .data(network.features)
+          .data(nodes.features)
           .enter()
           .append("circle")
           .attr("cx", node.cx)
@@ -115,7 +115,7 @@ circle:hover{
         };
 
         randomize = function(){
-          network.features.map(function(d){
+          nodes.features.map(function(d){
             d.properties.value = 40*Math.random() + 5;
             return d;
           });

@@ -1,26 +1,31 @@
+(function() {
+
+// Inspired by the sankey plugin https://github.com/d3/d3-plugins/tree/master/sankey
 d3.spatialsankey = function() {
   var spatialsankey = {},
       map = {},
-      network = {},
+      nodes = {},
       links = {},
       flows = {},
       color;
 
-  spatialsankey.network = function(_) {
-    if (!arguments.length) return network;
-    network = _;
+  // Get or set data for nodes
+  spatialsankey.nodes = function(_) {
+    if (!arguments.length) return nodes;
+    nodes = _;
     // Reverse coordinates for leaflet compliance
-    network.features.forEach(function(d){d.geometry.coordinates.reverse();});
+    nodes.features.forEach(function(d){d.geometry.coordinates.reverse();});
     return spatialsankey;
   };
 
+  // Get or set data for links
   spatialsankey.links = function(_) {
     if (!arguments.length) return links;
     links = _;
     links.map(function(link){
       // Get target and source features
-      var source_feature = network.features.filter(function(d) {return d.properties.id == link.source; })[0],
-          target_feature = network.features.filter(function(d) {return d.properties.id == link.target; })[0];
+      var source_feature = nodes.features.filter(function(d) {return d.properties.id == link.source; })[0],
+          target_feature = nodes.features.filter(function(d) {return d.properties.id == link.target; })[0];
       // Set coordinates for source and target
       link.source_coords = source_feature.geometry.coordinates;
       link.target_coords = target_feature.geometry.coordinates;
@@ -28,31 +33,45 @@ d3.spatialsankey = function() {
     })
     return spatialsankey;
   };
+
+  // Get or set data for flow volumes
   spatialsankey.flows = function(_){
     if (!arguments.length) return flows;
     flows = _;
+    // Add flow value to links using IDs
     links.map(function(link){
-      // debugger
       var flow = flows.filter(function(flow) {return flow.id == link.id;})[0]
       link.flow = flow.flow;
       return link; 
     });
+    // Calculate total inflow value for nodes
+    nodes.features.map(function(node){
+      // Get all inflows to this node
+      var inflows = links.filter(function(link) {return link.target == node.properties.id});
+      // Sum inflows and set aggregate value
+      node.properties.aggregate_inflows = inflows.reduce(function(memo, link) {return memo + link.flow}, 0);
+      return node;
+    })
     return spatialsankey
   };
 
+  // Get or set leaflet library (defaults to L)
   spatialsankey.leaflet = function(_) {
     if(!arguments.length) return L;
     L = _;
     return spatialsankey;
   };
 
+  // Get or set leaflet map instance (defaults to map)
   spatialsankey.map = function(_) {
     if(!arguments.length) return map;
     map = _;
     return spatialsankey;
   };
 
+  // Draw link element
   spatialsankey.link = function() {
+    // Set default curvature parameters
     var shift = {"x": 0.3, "y": 0.1},
         width = function width(d) {return d.flow;};
 
@@ -84,6 +103,7 @@ d3.spatialsankey = function() {
     return link;
   };
 
+  // Draw node circle
   spatialsankey.node = function(){
     var node = {},
         color = d3.scale.linear()
@@ -101,10 +121,9 @@ d3.spatialsankey = function() {
       return cy;
     };
     node.r = function(d) {
-      var val = d.properties.value;
+      var val = d.properties.aggregate_inflows;
       if(!val) return 0;
-      // return val;
-      return val/2;
+      return val;
     };
     node.color = function(_){
       if (!arguments.length) return color;
@@ -124,3 +143,4 @@ d3.spatialsankey = function() {
   return spatialsankey;
 };
 
+})();
