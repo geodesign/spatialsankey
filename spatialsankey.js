@@ -88,7 +88,8 @@ d3.spatialsankey = function() {
               range = link_flow_range.max - link_flow_range.min;
           return (width_range.max - width_range.min)*(diff/range) + width_range.min;
         };
-
+    
+    // Define path drawing function
     function link(d) {
       var source = map.latLngToLayerPoint(d.source_coords),
           target = map.latLngToLayerPoint(d.target_coords),

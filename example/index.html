@@ -50,6 +50,11 @@ circle {
 circle:hover{
     fill-opacity: 0.6;
 }
+marker path {
+  stroke: none;
+  stroke-linecap: flat;
+  fill:red;
+}
 </style>
 
 <body>
@@ -67,11 +72,21 @@ circle:hover{
   var svg = d3.select("#map").select("svg"),
       g = svg.append("g");
 
+svg.append("defs").append("marker")
+    .attr("id", "arrowhead")
+    .attr("refX", 8)
+    .attr("refY", 4)
+    .attr("markerWidth", 13)
+    .attr("markerHeight", 13)
+    .attr("orient", "auto")
+    .append("path")
+    .attr("d", "M0,0 L0,9 L8,4 L0,0");
+
   var spatialsankey = d3.spatialsankey();
 
-  d3.json("nodes.json", function(nodes) {
-    d3.json("flows.json", function(flows) {
-      d3.json("links.json", function(links) {
+  d3.json("data/nodes.json", function(nodes) {
+    d3.json("data/flows.json", function(flows) {
+      d3.json("data/links.json", function(links) {
 
         spatialsankey = d3.spatialsankey()
                                 .map(map)
@@ -80,7 +95,7 @@ circle:hover{
                                 .flows(flows);
 
         var node = spatialsankey.node(),
-            link = spatialsankey.link(),
+            link = spatialsankey.link().shift({'x':0.5,'y':0.5}),
             linkwidth = link.width();
 
         var mouseover = function(d){
@@ -104,6 +119,7 @@ circle:hover{
           .enter().append("path")
           .attr("d", link)
           .style("stroke-width", linkwidth);
+          // .attr("marker-end", "url(#arrowhead)");
         
         var viewreset = function(){
             circs
