@@ -107,7 +107,7 @@ d3.spatialsankey = function() {
   spatialsankey.link = function() {
     // Set default curvature parameters
     var shift = {"x": 0.4, "y": 0.1},
-        width_range = {min: 1, max: 10};
+        width_range = {min: 1, max: 8};
     
     // Calculate widht based on data range and with specifications
     var width = function width(d) {
@@ -154,7 +154,7 @@ d3.spatialsankey = function() {
   // Draw node circle
   spatialsankey.node = function(){
     var node = {},
-        node_radius_range = {min: 10, max: 30},
+        node_radius_range = {min: 10, max: 20},
         node_color_range = ["yellow", "red"],
         color = d3.scale.linear()
                   .domain([0, 1])
@@ -188,7 +188,7 @@ d3.spatialsankey = function() {
       return node;
     };
     node.fill = function(d) {
-      var diff = d.properties.aggregate_inflows - node_flow_range.min,
+      var diff = d.properties.aggregate_outflows - node_flow_range.min,
           range = node_flow_range.max - node_flow_range.min,
           load = diff/range;
       return color(load);

@@ -44,18 +44,6 @@ path:hover {
   stroke-opacity: 0.8;
   stroke: #315B7E;
 }
-circle {
-    fill-opacity: 0.3;
-    cursor: pointer;
-}
-circle:hover{
-    fill-opacity: 0.6;
-}
-marker path {
-  stroke: none;
-  stroke-linecap: flat;
-  fill:red;
-}
 </style>
 
 <body>
@@ -70,7 +58,7 @@ marker path {
   
   // Set leaflet map
   var map = new L.map('map', {
-            center: new L.LatLng(50,10),
+            center: new L.LatLng(50,15),
             zoom: 4,
             minZoom: 0,
             maxZoom: 18
@@ -97,18 +85,8 @@ marker path {
 
   // Setup svg element to work with
   var svg = d3.select("#map").select("svg"),
-      g = svg.append("g");
-
-  // Setup marker objects for arrowheads
-  svg.append("defs").append("marker")
-      .attr("id", "arrowhead")
-      .attr("refX", 8)
-      .attr("refY", 4)
-      .attr("markerWidth", 13)
-      .attr("markerHeight", 13)
-      .attr("orient", "auto")
-      .append("path")
-      .attr("d", "M0,0 L0,9 L8,4 L0,0");
+      linklayer = svg.append("g"),
+      nodelayer = svg.append("g");
 
   // Load data asynchronosuly
   d3.json("nodes.json", function(nodes) {
@@ -129,45 +107,55 @@ marker path {
           link = spatialsankey.link(),
           linkwidth = link.width();
 
-      // Draw bezier curves
-      var drawbeziers = function(d){
-
+      var mouseover = function(d){
+        // Get link data for this node
         var nodelinks = links.filter(function(link){
           return link.source == d.properties.id;
         });
 
-        var beziers = g.selectAll("path").data(nodelinks);
+        // Add data to link layer
+        var beziers = linklayer.selectAll("path").data(nodelinks);
 
+        // Draw new links
         beziers.enter()
           .append("path")
           .attr("d", link)
           .attr('id', function(d){return d.id})
           .style("stroke-width", linkwidth);
         
-        beziers.exit().remove();        
+        // Remove old links
+        beziers.exit().remove();
+
+        // Hide inactive nodes
+        var circleUnderMouse = this;
+        circs.transition().style('opacity',function () {
+            return (this === circleUnderMouse) ? 0.7 : 0;
+        });
       };
 
-      // Hide Bezier curves
-      var hidebeziers = function(d) {
-        g.selectAll("path").remove();
+      var mouseout = function(d) {
+        // Remove links
+        linklayer.selectAll("path").remove();
+        // Show all nodes
+        circs.transition().style('opacity', 0.7);
       };
 
       // Draw circles at nodes
-      var nodes_with_imports = nodes.features.filter(function(node){return node.properties.aggregate_outflows != 0});
-      var circs = g.selectAll("circle")
-        .data(nodes_with_imports)
+      var circs = nodelayer.selectAll("circle")
+        .data(nodes.features)
         .enter()
         .append("circle")
         .attr("cx", node.cx)
         .attr("cy", node.cy)
         .attr("r", node.r)
+        .attr("opacity", 0.7)
         .style("fill", node.fill)
-        .on('mouseover', drawbeziers)
-        .on('mouseout', hidebeziers);
+        .on('mouseover', mouseover)
+        .on('mouseout', mouseout);
       
       // Adopt draw size after leaflet zoom reset
       var zoomend = function(){
-          g.selectAll("path").attr("d", link);
+          linklayer.selectAll("path").attr("d", link);
 
           circs.attr("cx", node.cx)
                .attr("cy", node.cy);
