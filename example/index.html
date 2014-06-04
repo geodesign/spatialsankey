@@ -9,6 +9,7 @@ body {
   position: absolute;
   width:100%;
   height: 100%;
+  margin: 0px;
 }
 #map {
   top:0px;
@@ -59,94 +60,120 @@ marker path {
 
 <body>
 <div id="map"></div>
-<div id="msg-box">Hover over nodes</div>
-<div id="randomize">Randomize!</div>
 </body>
 
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
 <script src="../spatialsankey.js"></script>
-<script src="setmap.js"></script>
 
 <script type="text/javascript">
+  
+  // Set leaflet map
+  var map = new L.map('map', {
+            center: new L.LatLng(50,10),
+            zoom: 4,
+            minZoom: 0,
+            maxZoom: 18
+          });
+
+  var tonerUrl = "http://{S}tile.stamen.com/toner-lite/{Z}/{X}/{Y}.png";
+   
+  var url = tonerUrl.replace(/({[A-Z]})/g, function(s) {
+    return s.toLowerCase();
+  });
+   
+  var basemap = L.tileLayer(url, {
+    subdomains: ['','a.','b.','c.','d.'],
+    minZoom: 0,
+    maxZoom: 20,
+    type: 'png',
+    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>'
+  });
+   
+  basemap.addTo(map);
+
+  // Initialize the SVG layer
+  map._initPathRoot()
+
+  // Setup svg element to work with
   var svg = d3.select("#map").select("svg"),
       g = svg.append("g");
 
-svg.append("defs").append("marker")
-    .attr("id", "arrowhead")
-    .attr("refX", 8)
-    .attr("refY", 4)
-    .attr("markerWidth", 13)
-    .attr("markerHeight", 13)
-    .attr("orient", "auto")
-    .append("path")
-    .attr("d", "M0,0 L0,9 L8,4 L0,0");
+  // Setup marker objects for arrowheads
+  svg.append("defs").append("marker")
+      .attr("id", "arrowhead")
+      .attr("refX", 8)
+      .attr("refY", 4)
+      .attr("markerWidth", 13)
+      .attr("markerHeight", 13)
+      .attr("orient", "auto")
+      .append("path")
+      .attr("d", "M0,0 L0,9 L8,4 L0,0");
 
-  var spatialsankey = d3.spatialsankey();
+  // Load data asynchronosuly
+  d3.json("nodes.json", function(nodes) {
+    d3.csv("links.csv", function(links) {
 
-  d3.json("data/nodes.json", function(nodes) {
-    d3.json("data/flows.json", function(flows) {
-      d3.json("data/links.json", function(links) {
-
-        spatialsankey = d3.spatialsankey()
-                                .map(map)
-                                .nodes(nodes)
-                                .links(links)
-                                .flows(flows);
-
-        var node = spatialsankey.node(),
-            link = spatialsankey.link().shift({'x':0.5,'y':0.5}),
-            linkwidth = link.width();
-
-        var mouseover = function(d){
-          d3.select('#msg-box').text(d.properties.name + ' (type: ' +
-           d.properties.type + ', id: ' + d.properties.id + ')');
-        };
-
-
-        var circs = g.selectAll("circle")
-          .data(nodes.features)
-          .enter()
-          .append("circle")
-          .attr("cx", node.cx)
-          .attr("cy", node.cy)
-          .attr("r", node.r)
-          .style("fill", node.fill)
-          .on('mouseover', mouseover);
-
-        var beziers = g.selectAll("path")
-          .data(links)
-          .enter().append("path")
-          .attr("d", link)
-          .style("stroke-width", linkwidth);
-          // .attr("marker-end", "url(#arrowhead)");
-        
-        var viewreset = function(){
-            circs
-              .attr("cx", node.cx)
-              .attr("cy", node.cy);
-
-            beziers
-              .attr("d", link);
-        };
-
-        randomize = function(){
-          nodes.features.map(function(d){
-            d.properties.value = 40*Math.random() + 5;
-            return d;
-          });
-          links.map(function(d){
-            d.flow = 10*Math.random() + 2;
-            return d;
-          });
-          circs.transition().attr("r", node.r);
-          beziers.transition().style("stroke-width", linkwidth);
-        };
+      // Setup spatialsankey object
+      var spatialsankey = d3.spatialsankey()
+                              .map(map)
+                              .nodes(nodes)
+                              .links(links);
       
-        map.on("viewreset", viewreset);
+      // Update nodes and links objects
+      nodes = spatialsankey.nodes();
+      links = spatialsankey.links();
 
-        d3.select('#randomize').on('click', randomize)
-      });
+      // Set node and link drawing functions
+      var node = spatialsankey.node(),
+          link = spatialsankey.link(),
+          linkwidth = link.width();
+
+      // Draw bezier curves
+      var drawbeziers = function(d){
+
+        var nodelinks = links.filter(function(link){
+          return link.source == d.properties.id;
+        });
+
+        var beziers = g.selectAll("path").data(nodelinks);
+
+        beziers.enter()
+          .append("path")
+          .attr("d", link)
+          .attr('id', function(d){return d.id})
+          .style("stroke-width", linkwidth);
+        
+        beziers.exit().remove();        
+      };
+
+      // Hide Bezier curves
+      var hidebeziers = function(d) {
+        g.selectAll("path").remove();
+      };
+
+      // Draw circles at nodes
+      var nodes_with_imports = nodes.features.filter(function(node){return node.properties.aggregate_outflows != 0});
+      var circs = g.selectAll("circle")
+        .data(nodes_with_imports)
+        .enter()
+        .append("circle")
+        .attr("cx", node.cx)
+        .attr("cy", node.cy)
+        .attr("r", node.r)
+        .style("fill", node.fill)
+        .on('mouseover', drawbeziers)
+        .on('mouseout', hidebeziers);
+      
+      // Adopt draw size after leaflet zoom reset
+      var zoomend = function(){
+          g.selectAll("path").attr("d", link);
+
+          circs.attr("cx", node.cx)
+               .attr("cy", node.cy);
+      };
+   
+      map.on("zoomend", zoomend);
     });
   });
 </script>

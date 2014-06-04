@@ -5,8 +5,8 @@ d3.spatialsankey = function() {
   var spatialsankey = {},
       map = {},
       nodes = {},
-      links = {},
-      flows = {},
+      links = [],
+      flows = [],
       node_flow_range = {},
       link_flow_range = {};
 
@@ -37,50 +37,77 @@ d3.spatialsankey = function() {
   spatialsankey.links = function(_) {
     if (!arguments.length) return links;
     links = _;
-    // Add coordinates to links
-    links.map(function(link){
+    // Add coordinates to links and cast to float
+    links = links.map(function(link){
+      // Cast to number
+      if(link.flow) link.flow = parseFloat(link.flow);
+
       // Get target and source features
       var source_feature = nodes.features.filter(function(d) { return d.properties.id == link.source; })[0],
           target_feature = nodes.features.filter(function(d) { return d.properties.id == link.target; })[0];
-      // Set coordinates for source and target
-      link.source_coords = source_feature.geometry.coordinates;
-      link.target_coords = target_feature.geometry.coordinates;
-      return link;
-    })
+
+      // If available, set coordinates for source and target
+      if (source_feature && target_feature) {
+        link.source_coords = source_feature.geometry.coordinates;
+        link.target_coords = target_feature.geometry.coordinates;
+        return link;
+      }
+      else{
+        return null;
+      }
+    });
+
+    // Remove links that have no node or zero flow
+    links = links.filter(function(link){ return link != null});
+    links = links.filter(function(link){ return link.flow != 0});
+
+    // If flows were specified, reset flow values for links using IDs
+    if (flows.length) {
+      links.map(function(link){
+        var flow = flows.filter(function(flow) { return flow.id == link.id; })[0]
+        link.flow = flow.flow;
+        return link; 
+      });      
+    }
+
+    // Calculate total inflow value for nodes
+    nodes.features = nodes.features.map(function(node) {
+      // Get all in and outflows to this node
+      var inflows = links.filter(function(link) { return link.target == node.properties.id; });
+      var outflows = links.filter(function(link) { return link.source == node.properties.id; });
+      
+      // Sum flows and set aggregate values
+      node.properties.aggregate_inflows = inflows.reduce(function(memo, link) { return memo + link.flow; }, 0);
+      node.properties.aggregate_outflows = outflows.reduce(function(memo, link) { return memo + link.flow; }, 0);
+
+      return node;
+    });
+
+    // Calculate ranges of values for links and nodes
+    link_flow_range.min = d3.min(links, function(link) { return link.flow; });
+    link_flow_range.max = d3.max(links, function(link) { return link.flow; });
+
+    node_flow_range.min = d3.min(nodes.features, function(feature) {
+      var inflow = feature.properties.aggregate_outflows;
+      return inflow == 0 ? null : inflow;
+    });
+    node_flow_range.max = d3.max(nodes.features, function(feature) { return feature.properties.aggregate_outflows; });
+
     return spatialsankey;
   };
 
   // Get or set data for flow volumes
   spatialsankey.flows = function(_) {
     if (!arguments.length) return flows;
-    flows = _;
-    // Add flow value to links using IDs
-    links.map(function(link){
-      var flow = flows.filter(function(flow) { return flow.id == link.id; })[0]
-      link.flow = flow.flow;
-      return link; 
-    });
-    // Calculate total inflow value for nodes
-    nodes.features.map(function(node) {
-      // Get all inflows to this node
-      var inflows = links.filter(function(link) { return link.target == node.properties.id; });
-      // Sum inflows and set aggregate value
-      node.properties.aggregate_inflows = inflows.reduce(function(memo, link) { return memo + link.flow; }, 0);
-      return node;
-    });
-    // Calculate ranges of values for links and nodes
-    link_flow_range.min = d3.min(links, function(link) { return link.flow; });
-    link_flow_range.max = d3.max(links, function(link) { return link.flow; });
-    node_flow_range.min = d3.min(nodes.features, function(feature) { return feature.properties.aggregate_inflows; });
-    node_flow_range.max = d3.max(nodes.features, function(feature) { return feature.properties.aggregate_inflows; });
+    flows = _;    
     return spatialsankey;
   };
 
   // Draw link element
   spatialsankey.link = function() {
     // Set default curvature parameters
-    var shift = {"x": 0.3, "y": 0.1},
-        width_range = {min: 2, max: 8};
+    var shift = {"x": 0.4, "y": 0.1},
+        width_range = {min: 1, max: 10};
     
     // Calculate widht based on data range and with specifications
     var width = function width(d) {
@@ -144,19 +171,21 @@ d3.spatialsankey = function() {
       return cy;
     };
     node.r = function(d) {
-      var diff = d.properties.aggregate_inflows - node_flow_range.min,
+      if (d.properties.aggregate_outflows == 0) return 0;
+      var diff = d.properties.aggregate_outflows - node_flow_range.min,
           range = node_flow_range.max - node_flow_range.min;
       return (node_radius_range.max - node_radius_range.min)*(diff/range) + node_radius_range.min;
     };
     node.color = function(_) {
       if (!arguments.length) return color;
       color = _;
-      return color;
+      return node;
     };
     node.color_range = function(_) {
       if (!arguments.length) return node_color_range;
       node_color_range = _;
-      return node_color_range;
+      color.range(node_color_range);
+      return node;
     };
     node.fill = function(d) {
       var diff = d.properties.aggregate_inflows - node_flow_range.min,
