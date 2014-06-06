@@ -10,28 +10,13 @@ body {
   width:100%;
   height: 100%;
   margin: 0px;
+  font-family: sans-serif;
 }
 #map {
   top:0px;
   left:0px;
   right:0px;
-  /*bottom: 0px;*/
   height: 100%;
-}
-#msg-box, #randomize {
-  position:absolute;
-  top: 90px;
-  left: 20px;
-  font-size: 14px;
-  line-height: 20px;
-  padding: 5px;
-  border: 1px solid black;
-  font-family: sans-serif;
-  background-color: white;
-}
-#randomize {
-  top: 140px;
-  cursor: pointer;
 }
 path {
   fill: none;
@@ -44,10 +29,29 @@ path:hover {
   stroke-opacity: 0.8;
   stroke: #315B7E;
 }
+#curvetype {
+  position: absolute;
+  right: 10px;
+  top:6px;
+}
 </style>
 
 <body>
-<div id="map"></div>
+  <div id="map"></div>
+  <form id="curvetype">
+    <input type="radio" name="use_arcs" value="1">Arcs<br>
+    <input type="radio" name="use_arcs" value="0">Curves<br>
+    <input type="radio" name="flip" value="1">Flip<br>
+    <input type="radio" name="flip" value="0">NoFlip<br>
+    <input type="radio" name="xshift" value="0.2">xshift 0.2<br>
+    <input type="radio" name="xshift" value="0.4">xshift 0.4<br>
+    <input type="radio" name="xshift" value="0.8">xshift 0.8<br>
+    <input type="radio" name="xshift" value="1.6">xshift 1.6<br>
+    <input type="radio" name="yshift" value="0.2">yshift 0.2<br>
+    <input type="radio" name="yshift" value="0.4">yshift 0.4<br>
+    <input type="radio" name="yshift" value="0.8">yshift 0.8<br>
+    <input type="radio" name="yshift" value="1.6">yshift 1.6<br>
+  </form>
 </body>
 
 <script src="http://d3js.org/d3.v3.min.js"></script>
@@ -55,113 +59,102 @@ path:hover {
 <script src="../spatialsankey.js"></script>
 
 <script type="text/javascript">
-  
-  // Set leaflet map
-  var map = new L.map('map', {
-            center: new L.LatLng(50,15),
-            zoom: 4,
-            minZoom: 0,
-            maxZoom: 18
-          });
 
-  var tonerUrl = "http://{S}tile.stamen.com/toner-lite/{Z}/{X}/{Y}.png";
-   
-  var url = tonerUrl.replace(/({[A-Z]})/g, function(s) {
-    return s.toLowerCase();
-  });
-   
-  var basemap = L.tileLayer(url, {
-    subdomains: ['','a.','b.','c.','d.'],
-    minZoom: 0,
-    maxZoom: 20,
-    type: 'png',
-    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>'
-  });
-   
-  basemap.addTo(map);
-
-  // Initialize the SVG layer
-  map._initPathRoot()
-
-  // Setup svg element to work with
-  var svg = d3.select("#map").select("svg"),
-      linklayer = svg.append("g"),
-      nodelayer = svg.append("g");
-
-  // Load data asynchronosuly
-  d3.json("nodes.json", function(nodes) {
-    d3.csv("links.csv", function(links) {
-
-      // Setup spatialsankey object
-      var spatialsankey = d3.spatialsankey()
-                              .map(map)
-                              .nodes(nodes)
-                              .links(links);
-      
-      // Update nodes and links objects
-      nodes = spatialsankey.nodes();
-      links = spatialsankey.links();
-
-      // Set node and link drawing functions
-      var node = spatialsankey.node(),
-          link = spatialsankey.link(),
-          linkwidth = link.width();
-
-      var mouseover = function(d){
-        // Get link data for this node
-        var nodelinks = links.filter(function(link){
-          return link.source == d.properties.id;
+// Set leaflet map
+var map = new L.map('map', {
+          center: new L.LatLng(50,15),
+          zoom: 4,
+          layers: [
+            new L.tileLayer('http://{s}tile.stamen.com/toner-lite/{z}/{x}/{y}.png', {
+              subdomains: ['','a.','b.','c.','d.'],
+              attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>'
+            })
+          ]
         });
+ 
+// Initialize the SVG layer
+map._initPathRoot()
 
-        // Add data to link layer
-        var beziers = linklayer.selectAll("path").data(nodelinks);
+// Setup svg element to work with
+var svg = d3.select("#map").select("svg"),
+    linklayer = svg.append("g"),
+    nodelayer = svg.append("g");
 
-        // Draw new links
-        beziers.enter()
-          .append("path")
-          .attr("d", link)
-          .attr('id', function(d){return d.id})
-          .style("stroke-width", linkwidth);
-        
-        // Remove old links
-        beziers.exit().remove();
+// Load data asynchronosuly
+d3.json("nodes.json", function(nodes) {
+  d3.csv("links.csv", function(links) {
 
-        // Hide inactive nodes
-        var circleUnderMouse = this;
-        circs.transition().style('opacity',function () {
-            return (this === circleUnderMouse) ? 0.7 : 0;
-        });
-      };
+    // Setup spatialsankey object
+    var spatialsankey = d3.spatialsankey()
+                            .map(map)
+                            .nodes(nodes.features)
+                            .links(links);
+    
+    var mouseover = function(d){
+      // Get link data for this node
+      var nodelinks = spatialsankey.links().filter(function(link){
+        return link.source == d.properties.id;
+      });
 
-      var mouseout = function(d) {
-        // Remove links
-        linklayer.selectAll("path").remove();
-        // Show all nodes
-        circs.transition().style('opacity', 0.7);
-      };
+      // Add data to link layer
+      var beziers = linklayer.selectAll("path").data(nodelinks);
+      link = spatialsankey.link(options);
 
-      // Draw circles at nodes
-      var circs = nodelayer.selectAll("circle")
-        .data(nodes.features)
-        .enter()
-        .append("circle")
-        .attr("cx", node.cx)
-        .attr("cy", node.cy)
-        .attr("r", node.r)
-        .attr("opacity", 0.7)
-        .style("fill", node.fill)
-        .on('mouseover', mouseover)
-        .on('mouseout', mouseout);
+      // Draw new links
+      beziers.enter()
+        .append("path")
+        .attr("d", link)
+        .attr('id', function(d){return d.id})
+        .style("stroke-width", spatialsankey.link().width());
       
-      // Adopt draw size after leaflet zoom reset
-      var zoomend = function(){
-          linklayer.selectAll("path").attr("d", link);
+      // Remove old links
+      beziers.exit().remove();
 
-          circs.attr("cx", node.cx)
-               .attr("cy", node.cy);
-      };
-   
-      map.on("zoomend", zoomend);
-    });
+      // Hide inactive nodes
+      var circleUnderMouse = this;
+      circs.transition().style('opacity',function () {
+          return (this === circleUnderMouse) ? 0.7 : 0;
+      });
+    };
+
+    var mouseout = function(d) {
+      // Remove links
+      linklayer.selectAll("path").remove();
+      // Show all nodes
+      circs.transition().style('opacity', 0.7);
+    };
+
+    // Draw nodes
+    var node = spatialsankey.node()
+    var circs = nodelayer.selectAll("circle")
+      .data(spatialsankey.nodes())
+      .enter()
+      .append("circle")
+      .attr("cx", node.cx)
+      .attr("cy", node.cy)
+      .attr("r", node.r)
+      .style("fill", node.fill)
+      .attr("opacity", 0.7)
+      .on('mouseover', mouseover)
+      .on('mouseout', mouseout);
+    
+    // Adopt size of drawn objects after leaflet zoom reset
+    var zoomend = function(){
+        linklayer.selectAll("path").attr("d", spatialsankey.link());
+
+        circs.attr("cx", node.cx)
+             .attr("cy", node.cy);
+    };
+ 
+    map.on("zoomend", zoomend);
   });
+});
+var options = {'use_arcs': true, 'flip': false};
+d3.selectAll("input").forEach(function(x){
+  options[x.name] = parseFloat(x.value);
+})
+
+d3.selectAll("input").on("click", function(){
+  options[this.name] = parseFloat(this.value);
+});
 </script>

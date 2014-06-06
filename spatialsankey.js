@@ -1,14 +1,16 @@
 (function() {
 
-// Inspired by the sankey plugin https://github.com/d3/d3-plugins/tree/master/sankey
+// Inspired by the d3-plugin sankey https://github.com/d3/d3-plugins/tree/master/sankey
 d3.spatialsankey = function() {
   var spatialsankey = {},
-      map = {},
+      map,
       nodes = {},
       links = [],
       flows = [],
       node_flow_range = {},
-      link_flow_range = {};
+      link_flow_range = {},
+      remove_zero_links = true,
+      remove_zero_nodes = true;
 
   // Get or set leaflet library (defaults to L)
   spatialsankey.leaflet = function(_) {
@@ -29,7 +31,14 @@ d3.spatialsankey = function() {
     if (!arguments.length) return nodes;
     nodes = _;
     // Reverse coordinates for leaflet compliance
-    nodes.features.forEach(function(d){d.geometry.coordinates.reverse();});
+    nodes.forEach(function(d){d.geometry.coordinates.reverse();});
+    return spatialsankey;
+  };
+
+  // Get or set data for flow volumes
+  spatialsankey.flows = function(_) {
+    if (!arguments.length) return flows;
+    flows = _;    
     return spatialsankey;
   };
 
@@ -37,41 +46,38 @@ d3.spatialsankey = function() {
   spatialsankey.links = function(_) {
     if (!arguments.length) return links;
     links = _;
-    // Add coordinates to links and cast to float
+
+    // Match nodes to links
     links = links.map(function(link){
-      // Cast to number
-      if(link.flow) link.flow = parseFloat(link.flow);
 
       // Get target and source features
-      var source_feature = nodes.features.filter(function(d) { return d.properties.id == link.source; })[0],
-          target_feature = nodes.features.filter(function(d) { return d.properties.id == link.target; })[0];
+      var source_feature = nodes.filter(function(d) { return d.properties.id == link.source; })[0],
+          target_feature = nodes.filter(function(d) { return d.properties.id == link.target; })[0];
 
-      // If available, set coordinates for source and target
-      if (source_feature && target_feature) {
-        link.source_coords = source_feature.geometry.coordinates;
-        link.target_coords = target_feature.geometry.coordinates;
-        return link;
+      // If nodes were not found, return null
+      if (!(source_feature && target_feature))return null;
+      
+      // Set coordinates for source and target
+      link.source_coords = source_feature.geometry.coordinates;
+      link.target_coords = target_feature.geometry.coordinates;
+
+      // If a flow for this link was specified, set flow value
+      var flow = flows.filter(function(flow) { return flow.id == link.id; })[0];
+      if (flow) {
+        link.flow = parseFloat(flow.flow);
       }
-      else{
-        return null;
-      }
+      
+      // Cast to flow to number
+      link.flow = parseFloat(link.flow);
+    
+      return link;
     });
 
-    // Remove links that have no node or zero flow
+    // Ignore links that have no node
     links = links.filter(function(link){ return link != null});
-    links = links.filter(function(link){ return link.flow != 0});
-
-    // If flows were specified, reset flow values for links using IDs
-    if (flows.length) {
-      links.map(function(link){
-        var flow = flows.filter(function(flow) { return flow.id == link.id; })[0]
-        link.flow = flow.flow;
-        return link; 
-      });      
-    }
-
-    // Calculate total inflow value for nodes
-    nodes.features = nodes.features.map(function(node) {
+    
+    // Calculate aggregate flow values for nodes
+    nodes.features = nodes.map(function(node) {
       // Get all in and outflows to this node
       var inflows = links.filter(function(link) { return link.target == node.properties.id; });
       var outflows = links.filter(function(link) { return link.source == node.properties.id; });
@@ -96,56 +102,85 @@ d3.spatialsankey = function() {
     return spatialsankey;
   };
 
-  // Get or set data for flow volumes
-  spatialsankey.flows = function(_) {
-    if (!arguments.length) return flows;
-    flows = _;    
-    return spatialsankey;
-  };
-
   // Draw link element
-  spatialsankey.link = function() {
-    // Set default curvature parameters
-    var shift = {"x": 0.4, "y": 0.1},
-        width_range = {min: 1, max: 8};
+  spatialsankey.link = function(options) {
     
+    // Set default curvature parameters
+    var sx = 0.4,
+        sy = 0.1,
+        width_range = {min: 1, max: 8},
+        hide_zero_flows = true,
+        arcs = false,
+        flip = false;
+
+    // Override with options
+    if(options){
+      if(options.xshift) sx = options.xshift;
+      if(options.yshift) sy = options.yshift;
+      if(options.minwidth) width_range.min = options.minwidth;
+      if(options.maxwidth) width_range.max = options.maxwidth;
+      if(options.hide_zero_flows) hide_zero_flows = options.hide_zero_flows;
+      if(options.use_arcs) arcs = options.use_arcs;
+      if(options.flip) flip = options.flip;
+    }
+    
+    // Define path drawing function
+    var link = function(d) {
+      if(hide_zero_flows && d.flow == 0) return null;
+
+      var source = map.latLngToLayerPoint(d.source_coords),
+          target = map.latLngToLayerPoint(d.target_coords),
+          dx = source.x - target.x,
+          dy = source.y - target.y;
+      
+      if(!arcs){
+        if(dy < 0 || flip){
+          var ctl_source_x = source.x - sx*dx,
+              ctl_source_y = source.y - sy*dy,
+              ctl_target_x = target.x + sx*dx,
+              ctl_target_y= target.y + sy*dy;
+        } else {
+          var ctl_source_x = source.x - sy*dx,
+              ctl_source_y = source.y - sx*dy,
+              ctl_target_x = target.x + sy*dx,
+              ctl_target_y= target.y + sx*dy;
+        }
+      } else  {
+        if(dy < 0 || flip){
+          var ctl_source_x = source.x - sx*dx,
+              ctl_source_y = source.y - sy*dy,
+              ctl_target_x = target.x + sy*dx,
+              ctl_target_y= target.y + sx*dy;
+        } else {
+          var ctl_source_x = source.x - sy*dx,
+              ctl_source_y = source.y - sx*dy,
+              ctl_target_x = target.x + sx*dx,
+              ctl_target_y= target.y + sy*dy;
+        }
+      }
+
+      return "M" + source.x + "," + source.y
+           + "C" + ctl_source_x + "," + ctl_source_y
+           + " " + ctl_target_x + "," + ctl_target_y
+           + " " + target.x + "," + target.y;
+    };
+
+    link.config = function(options){
+
+    };
+
     // Calculate widht based on data range and with specifications
-    var width = function width(d) {
+    var width = function(d) {
           var diff = d.flow - link_flow_range.min,
               range = link_flow_range.max - link_flow_range.min;
           return (width_range.max - width_range.min)*(diff/range) + width_range.min;
         };
     
-    // Define path drawing function
-    function link(d) {
-      var source = map.latLngToLayerPoint(d.source_coords),
-          target = map.latLngToLayerPoint(d.target_coords),
-          diff = {"x": source.x - target.x, "y": source.y - target.y},
-          ctl_source = {"x": source.x - shift.x*diff.x, "y": source.y + shift.y},
-          ctl_target = {"x": target.x + shift.x*diff.x, "y": target.y - shift.y};
-
-      return "M" + source.x + "," + source.y
-           + "C" + ctl_source.x + "," + ctl_source.y
-           + " " + ctl_target.x + "," + ctl_target.y
-           + " " + target.x + "," + target.y;
-    };
-
-    link.shift = function(_) {
-      if (!arguments.length) return shift;
-      shift = _;
-      return link;
-    };
 
     link.width = function(_) {
       if (!arguments.length) return width;
-      width = _;      
+      width = _;
       return width;
-    };
-
-    link.width_range = function(_) {
-      if (!arguments.length) return width_range;
-      width_range = _;
-      return width_range;
     };
 
     return link;
@@ -179,12 +214,6 @@ d3.spatialsankey = function() {
     node.color = function(_) {
       if (!arguments.length) return color;
       color = _;
-      return node;
-    };
-    node.color_range = function(_) {
-      if (!arguments.length) return node_color_range;
-      node_color_range = _;
-      color.range(node_color_range);
       return node;
     };
     node.fill = function(d) {
