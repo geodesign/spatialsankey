@@ -47,7 +47,6 @@ d3.spatialsankey = function() {
   spatialsankey.links = function(_) {
     if (!arguments.length) return links;
     links = _;
-    console.log(links)
     // Match nodes to links
     links = links.map(function(link){
 
@@ -103,7 +102,6 @@ d3.spatialsankey = function() {
       return inflow == 0 ? null : inflow;
     });
     node_flow_range.max = d3.max(nodes, function(node) { return node.properties.aggregate_outflows; });
-    console.log(link_flow_range, node_flow_range);
 
     return spatialsankey;
   };
