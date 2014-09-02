@@ -93,7 +93,7 @@ d3.json("nodes.json", function(nodes) {
     var mouseover = function(d){
       // Get link data for this node
       var nodelinks = spatialsankey.links().filter(function(link){
-        return link.source == d.properties.id;
+        return link.source == d.id;
       });
 
       // Add data to link layer

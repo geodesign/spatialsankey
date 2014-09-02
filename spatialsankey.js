@@ -33,6 +33,8 @@ d3.spatialsankey = function() {
     nodes = _;
     // Reduce data to feature list
     if(nodes.features) nodes = nodes.features;
+    // GeoJson uses lon/lat, leaflet uses lat/lon, so coordinates need to be reversed
+    nodes.forEach(function(d){d.geometry.coordinates.reverse();})
     return spatialsankey;
   };
 
@@ -57,7 +59,7 @@ d3.spatialsankey = function() {
       // If nodes were not found, return null
       if (!(source_feature && target_feature))return null;
       
-      // Set coordinates for source and target
+      // Set coordinates for source and target      
       link.source_coords = source_feature.geometry.coordinates;
       link.target_coords = target_feature.geometry.coordinates;
 
@@ -117,7 +119,7 @@ d3.spatialsankey = function() {
         arcs = false,
         flip = false;
 
-    // Override with options
+    // Override options
     if(options){
       if(options.xshift) sx = options.xshift;
       if(options.yshift) sy = options.yshift;
