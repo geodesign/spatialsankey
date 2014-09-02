@@ -11,7 +11,7 @@ d3.spatialsankey = function() {
       link_flow_range = {},
       remove_zero_links = true,
       remove_zero_nodes = true,
-      version = '0.0.2';
+      version = '0.0.3';
 
   // Get or set leaflet library (defaults to L)
   spatialsankey.leaflet = function(_) {
@@ -134,45 +134,31 @@ d3.spatialsankey = function() {
     var link = function(d) {
       if(hide_zero_flows && d.flow == 0) return null;
 
+      // Set control point inputs
       var source = map.latLngToLayerPoint(d.source_coords),
           target = map.latLngToLayerPoint(d.target_coords),
           dx = source.x - target.x,
           dy = source.y - target.y;
-      
+
+      // Determine control point locations
       if(!arcs){
         if(dy < 0 || flip){
-          var ctl_source_x = source.x - sx*dx,
-              ctl_source_y = source.y - sy*dy,
-              ctl_target_x = target.x + sx*dx,
-              ctl_target_y= target.y + sy*dy;
+          var controls = [sx*dx, sy*dy, sx*dx, sy*dy]
         } else {
-          var ctl_source_x = source.x - sy*dx,
-              ctl_source_y = source.y - sx*dy,
-              ctl_target_x = target.x + sy*dx,
-              ctl_target_y= target.y + sx*dy;
+          var controls = [sy*dx, sx*dy, sy*dx, sx*dy]
         }
       } else  {
         if(dy < 0 || flip){
-          var ctl_source_x = source.x - sx*dx,
-              ctl_source_y = source.y - sy*dy,
-              ctl_target_x = target.x + sy*dx,
-              ctl_target_y= target.y + sx*dy;
+          var controls = [sx*dx, sy*dy, sy*dx, sx*dy];
         } else {
-          var ctl_source_x = source.x - sy*dx,
-              ctl_source_y = source.y - sx*dy,
-              ctl_target_x = target.x + sx*dx,
-              ctl_target_y= target.y + sy*dy;
+          var controls = [sy*dx, sx*dy, sx*dx, sy*dy];
         }
       }
 
       return "M" + source.x + "," + source.y
-           + "C" + ctl_source_x + "," + ctl_source_y
-           + " " + ctl_target_x + "," + ctl_target_y
+           + "C" + (source.x - controls[0]) + "," + (source.y - controls[1])
+           + " " + (target.x + controls[2]) + "," + (target.y + controls[3])
            + " " + target.x + "," + target.y;
-    };
-
-    link.config = function(options){
-
     };
 
     // Calculate widht based on data range and with specifications
