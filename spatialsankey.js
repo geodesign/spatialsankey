@@ -1,7 +1,7 @@
 (function() {
 
-// Inspired by the d3-plugin sankey https://github.com/d3/d3-plugins/tree/master/sankey
 d3.spatialsankey = function() {
+  // Define control variables
   var spatialsankey = {},
       map,
       nodes = {},
@@ -11,17 +11,10 @@ d3.spatialsankey = function() {
       link_flow_range = {},
       remove_zero_links = true,
       remove_zero_nodes = true,
-      version = '0.0.3';
+      version = '0.0.4';
 
-  // Get or set leaflet library (defaults to L)
-  spatialsankey.leaflet = function(_) {
-    if(!arguments.length) return L;
-    L = _;
-    return spatialsankey;
-  };
-
-  // Get or set leaflet map instance (defaults to map)
-  spatialsankey.map = function(_) {
+  // Get or set leaflet map instance
+  spatialsankey.lmap = function(_) {
     if(!arguments.length) return map;
     map = _;
     return spatialsankey;
@@ -38,7 +31,7 @@ d3.spatialsankey = function() {
     return spatialsankey;
   };
 
-  // Get or set data for flow volumes
+  // Get or set data for flow volumes (optional)
   spatialsankey.flows = function(_) {
     if (!arguments.length) return flows;
     flows = _;    
@@ -57,7 +50,7 @@ d3.spatialsankey = function() {
           target_feature = nodes.filter(function(node) { return node.id == link.target; })[0];
 
       // If nodes were not found, return null
-      if (!(source_feature && target_feature))return null;
+      if (!(source_feature && target_feature)) return null;
       
       // Set coordinates for source and target      
       link.source_coords = source_feature.geometry.coordinates;
@@ -66,16 +59,16 @@ d3.spatialsankey = function() {
       // If a flow for this link was specified, set flow value
       var flow = flows.filter(function(flow) { return flow.id == link.id; })[0];
       if (flow) {
-        link.flow = parseFloat(flow.flow);
+        link.flow = flow.flow;
       }
       
-      // Cast flow to number
+      // Make sure flow is a number
       link.flow = parseFloat(link.flow);
     
       return link;
     });
 
-    // Ignore links that have no node
+    // Ignore links that have no node match
     var link_count = links.length;
     links = links.filter(function(link){ return link != null});
     if(link_count != links.length){
@@ -111,15 +104,20 @@ d3.spatialsankey = function() {
   // Draw link element
   spatialsankey.link = function(options) {
     
-    // Set default curvature parameters
-    var sx = 0.4,
-        sy = 0.1,
-        width_range = {min: 1, max: 8},
-        hide_zero_flows = true,
-        arcs = false,
-        flip = false;
+    // Link styles
+    // x and y shifts for control points   
+    var sx = 0.4, 
+        sy = 0.1;
+    // With range of lines, set min and max to be equal for a constant width.
+    var width_range = {min: 1, max: 8};
+    // If true, links are only shown if there is a flow value for them
+    var hide_zero_flows = true;
+    // Use arcs instead of S shaped bezier curves
+    var arcs = false;
+    // If true, lines are flipped along x axis
+    var flip = false;
 
-    // Override options
+    // Customize link styles using options
     if(options){
       if(options.xshift) sx = options.xshift;
       if(options.yshift) sy = options.yshift;
@@ -140,7 +138,7 @@ d3.spatialsankey = function() {
           dx = source.x - target.x,
           dy = source.y - target.y;
 
-      // Determine control point locations
+      // Determine control point locations for different link styles
       if(!arcs){
         if(dy < 0 || flip){
           var controls = [sx*dx, sy*dy, sx*dx, sy*dy]
@@ -161,14 +159,14 @@ d3.spatialsankey = function() {
            + " " + target.x + "," + target.y;
     };
 
-    // Calculate widht based on data range and with specifications
+    // Calculate width based on data range and width range setting
     var width = function(d) {
           var diff = d.flow - link_flow_range.min,
               range = link_flow_range.max - link_flow_range.min;
           return (width_range.max - width_range.min)*(diff/range) + width_range.min;
         };
     
-
+    // Get or set link width function
     link.width = function(_) {
       if (!arguments.length) return width;
       width = _;
@@ -180,10 +178,13 @@ d3.spatialsankey = function() {
 
   // Draw node circle
   spatialsankey.node = function(){
-    var node = {},
-        node_radius_range = {min: 10, max: 20},
-        node_color_range = ["yellow", "red"],
-        color = d3.scale.linear()
+    var node = {};
+    // Range of node circles (set min and max equal for constant circle size)
+    var node_radius_range = {min: 10, max: 20};
+    // Range for color coding according to flow size (set colors for single coloring)
+    node_color_range = ["yellow", "red"];
+    // Instantiate color scale function
+    var color = d3.scale.linear()
                   .domain([0, 1])
                   .range(node_color_range);
 
