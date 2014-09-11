@@ -2,7 +2,7 @@ Sankey diagrams on a map
 ========================
 D3 Plugin for visualizing flows through a network on a leaflet map.
 
-Here is a small [example application](http://bl.ocks.org/yellowcap/18b7242e798fbfc1f173) of the plugin.
+Here is a small [example application](http://bl.ocks.org/yellowcap/03cd4a6c72f661377f7e) of the plugin.
 
 The spatialsankey plugin is inspired by the d3-plugin [sankey](https://github.com/d3/d3-plugins/tree/master/sankey) and the the example integration of D3 elements into a leaflet map follows the [D3 + Leaflet](http://bost.ocks.org/mike/leaflet/) tutorial.
 
@@ -36,7 +36,8 @@ var beziers = linklayer.selectAll("path")
                        .append("path")
                        .attr("d", link)
                        .attr('id', function(d){return d.id})
-                       .style("stroke-width", linke.width());
+                       .style("stroke-width", linke.width())
+                       .style("fill", 'none');
 ```
 
 nodes.geojson
