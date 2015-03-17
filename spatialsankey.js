@@ -63,7 +63,7 @@ d3.spatialsankey = function() {
     });
     node_flow_range.max = d3.max(nodes, function(node) { return node.properties.aggregate_outflows; });
 
-    return spatialsankey;
+    return {links: link_flow_range, nodes: node_flow_range};
   };
 
   // Get or set data for links

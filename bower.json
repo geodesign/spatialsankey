@@ -1,0 +1,18 @@
+{
+  "name": "spatialsankey",
+  "main": "spatialsankey.js",
+  "version": "0.0.1",
+  "homepage": "https://github.com/geodesign/spatialsankey",
+  "authors": [
+    "Daniel Wiesmann <daniel.wiesmann@gmail.com>"
+  ],
+  "description": "Spatial sankey diagrams on leaflet maps.",
+  "license": "BSD",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
