@@ -191,11 +191,6 @@ d3.spatialsankey = function() {
     var node_radius_range = {min: 10, max: 20};
     // Range for color coding according to flow size (set colors for single coloring)
     node_color_range = ["yellow", "red"];
-    // Instantiate color scale function
-    var color = d3.scale.linear()
-                  .domain([0, 1])
-                  .range(node_color_range);
-
     // Customize link styles using options
     if(options){
       if(options.minradius) node_radius_range.min = options.minradius;
@@ -203,6 +198,11 @@ d3.spatialsankey = function() {
       if(options.mincolor) node_color_range[0] = options.mincolor;
       if(options.maxcolor) node_color_range[1] = options.maxcolor;
     }
+
+    // Instantiate color scale function after checking options
+    var color = d3.scale.linear()
+                  .domain([0, 1])
+                  .range(node_color_range);
 
     // Node object
     var node = {};
